@@ -128,7 +128,6 @@ angular.module('jkuri.slimscroll', [])
 				el.scrollTop = delta;
 			};
 
-			// init
 			scope.getBarHeight();
 			scope.attachWheel(el);
 
