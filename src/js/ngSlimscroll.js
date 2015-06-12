@@ -48,21 +48,21 @@ angular.module('jkuri.slimscroll', [])
 			var wrapper = angular.element('<div></div>');
 			wrapper.css({
 				'position': 'relative',
-	            'overflow': 'hidden',
-	            'width': scope.width + 'px',
-	            'height': scope.height + 'px'
+				'overflow': 'hidden',
+				'width': scope.width + 'px',
+				'height': scope.height + 'px'
 			});
 
 			var bar = angular.element('<div ng-mousedown="makeBarDraggable($event)""></div>');
 			bar.css({
 				'background': scope.color,
-	            'width': scope.size,
-	            'position': 'absolute',
-	            'top': '0',
-	            'opacity': '0.4',
-	            'display': scope.alwaysVisible ? 'block' : 'none',
-	            'border-radius': scope.borderRadius,
-	            'z-index': '99'
+				'width': scope.size,
+				'position': 'absolute',
+				'top': '0',
+				'opacity': '0.4',
+				'display': scope.alwaysVisible ? 'block' : 'none',
+				'border-radius': scope.borderRadius,
+				'z-index': '99'
 			});
 
 			var positionCss = (scope.position === 'right') ? { right: scope.distance } : { left: scope.distance };
@@ -74,14 +74,14 @@ angular.module('jkuri.slimscroll', [])
 
 			scope.makeBarDraggable = function (e) {
 				var top = parseFloat(bar.css('top')),
-					pageY = e.pageY;
+				    pageY = e.pageY;
 			};
 
 			scope.getBarHeight = function () {
 				var barHeight = Math.max((el.offsetHeight / el.scrollHeight) * el.offsetHeight, minBarHeight);
-          		bar.css({ 'height': barHeight + 'px' });
-          		var display = barHeight === el.offsetHeight ? 'none' : 'block';
-          		bar.css({ display: display });
+          			bar.css({ 'height': barHeight + 'px' });
+          			var display = barHeight === el.offsetHeight ? 'none' : 'block';
+          			bar.css({ display: display });
 			};
 
 			scope.attachWheel = function (target) {
@@ -123,7 +123,7 @@ angular.module('jkuri.slimscroll', [])
 				}
 
 				percentScroll = parseInt(bar.css('top'), 10) / (el.offsetHeight - bar[0].offsetHeight);
-          		delta = percentScroll * (el.scrollHeight - el.offsetHeight);
+          			delta = percentScroll * (el.scrollHeight - el.offsetHeight);
 
 				el.scrollTop = delta;
 			};
