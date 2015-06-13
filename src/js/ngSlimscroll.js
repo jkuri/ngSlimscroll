@@ -35,6 +35,7 @@ angular.module('jkuri.slimscroll', [])
 		scope.borderRadius = attrs.borderRadius || '3px';
 		scope.start = attrs.start || 'top';
 		scope.alwaysVisible = scope.$eval(attrs.alwaysVisible) || true;
+		scope.barDraggable = scope.$eval(attrs.barDraggable) || true;
 		scope.wheelStep = attrs.wheelStep || 20;
 		scope.opacity = attrs.opacity || 0.5;
 	};
