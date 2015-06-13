@@ -49,7 +49,8 @@ angular.module('jkuri.slimscroll', [])
 
 			var minBarHeight = 30,
 				isOverPanel,
-				releaseScroll = false;
+				releaseScroll = false,
+				isDrag = false;
 
 			element.css({
 				'overflow': 'hidden',
@@ -74,7 +75,8 @@ angular.module('jkuri.slimscroll', [])
 				'opacity': scope.opacity,
 				'display': scope.alwaysVisible ? 'block' : 'none',
 				'border-radius': scope.borderRadius,
-				'z-index': '99'
+				'z-index': '99',
+				'cursor': 'pointer'
 			});
 
 			var positionCss = (scope.position === 'right') ? { right: scope.distance } : { left: scope.distance };
@@ -84,9 +86,28 @@ angular.module('jkuri.slimscroll', [])
 			element.append(bar);
 			$compile(bar)(scope);
 
-			scope.makeBarDraggable = function (e) {
-				var top = parseFloat(bar.css('top')),
-				    pageY = e.pageY;
+			scope.makeBarDraggable = function () {
+				bar.bind('mousedown', function(e) {
+					var top = parseFloat(bar.css('top')),
+					    pageY = e.pageY,
+					    isDrag = true;
+
+					$document.bind('mousemove', function(e) {
+						bar.css({'top': top + e.pageY - pageY + 'px'});
+						scope.scrollContent(0, bar[0].offsetTop, false);
+					});
+
+					$document.bind('mouseup', function(e) {
+						isDrag = false;
+						$document.unbind('mousemove');
+					});
+
+					return;
+				}).bind('selectstart', function(e) {
+					e.preventDefault();
+					e.stopPropagation();
+					return false;
+				});
 			};
 
 			scope.getBarHeight = function () {
@@ -142,6 +163,7 @@ angular.module('jkuri.slimscroll', [])
 
 			scope.getBarHeight();
 			scope.attachWheel(el);
+			scope.makeBarDraggable();
 
 		}
 	};
