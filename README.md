@@ -1,7 +1,7 @@
+## Angular JS slimscroll (no jQuery required)
+
 #### ngSlimscroll
 AngularJS implementation of original jQuery slimScroll
-
-# Angular JS slimscroll (no jQuery required)
 
 Originally developed by Piotr Rochala ([http://rocha.la](http://rocha.la)) [jQuery version](https://github.com/rochal/jQuery-slimScroll)
 
