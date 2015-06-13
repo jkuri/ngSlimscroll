@@ -57,8 +57,6 @@ angular.module('jkuri.slimscroll', [])
 				'height': scope.height + 'px',
 			});
 
-			console.log(scope.height);
-
 			var wrapper = angular.element('<div></div>');
 			wrapper.css({
 				'position': 'relative',
