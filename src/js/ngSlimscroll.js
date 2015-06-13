@@ -16,20 +16,32 @@ angular.module('jkuri.slimscroll', [])
 	'use strict';
 
 	var setScopeValues = function (scope, element, attrs) {
-		scope.width = element[0].clientWidth || 'auto';
-		scope.height = attrs.height || element[0].clientHeight !== 0 ? element[0].clientHeight : 250;
+		var height = undefined;
+		
+		if (attrs.height !== 0 && attrs.height !== undefined) {
+			height = attrs.height;
+		} else if (element[0].clientHeight !== 0) {
+			height = element[0].clientHeight;
+		} else {
+			height = 250;
+		}
+
+		scope.width = attrs.width || element[0].clientWidth || 'auto';
+		scope.height = height;
 		scope.size = attrs.size || '7px';
 		scope.color = attrs.color || '#000';
 		scope.position = attrs.position || 'right';
 		scope.distance = attrs.distance || '1px';
-		scope.borderRadius = attrs.borderRadius || '6px';
+		scope.borderRadius = attrs.borderRadius || '3px';
 		scope.start = attrs.start || 'top';
 		scope.alwaysVisible = scope.$eval(attrs.alwaysVisible) || true;
 		scope.wheelStep = attrs.wheelStep || 20;
+		scope.opacity = attrs.opacity || 0.5;
 	};
 
 	return {
 		restrict: 'A',
+		scope: true,
 		link: function(scope, element, attrs) {
 			setScopeValues(scope, element, attrs);
 
@@ -45,6 +57,8 @@ angular.module('jkuri.slimscroll', [])
 				'height': scope.height + 'px',
 			});
 
+			console.log(scope.height);
+
 			var wrapper = angular.element('<div></div>');
 			wrapper.css({
 				'position': 'relative',
@@ -59,7 +73,7 @@ angular.module('jkuri.slimscroll', [])
 				'width': scope.size,
 				'position': 'absolute',
 				'top': '0',
-				'opacity': '0.4',
+				'opacity': scope.opacity,
 				'display': scope.alwaysVisible ? 'block' : 'none',
 				'border-radius': scope.borderRadius,
 				'z-index': '99'
@@ -98,7 +112,7 @@ angular.module('jkuri.slimscroll', [])
 
 				var delta = 0;
 
-				if (e.wheelDelta) { delta = -e.wheelDelta/120; }
+				if (e.wheelDelta) { delta = -e.wheelDelta / 120; }
 				if (e.detail) { delta = e.detail / 3; }
 
 				var target = e.target || e.srcTarget || e.srcElement;
