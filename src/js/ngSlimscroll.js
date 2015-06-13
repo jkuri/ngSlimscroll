@@ -128,6 +128,15 @@ angular.module('jkuri.slimscroll', [])
 				}
 			};
 
+			scope.detachWheel = function (target) {
+				if ($window.removeEventListener) {
+					target.removeEventListener('DOMMouseScroll', scope.onWheel, false);
+					target.removeEventListener('mousewheel', scope.onWheel, false);
+				} else {
+					$document.removeEventListener('onmousewheel', scope.wheel);
+				}
+			};
+
 			scope.onWheel = function (e) {
 				var e = e || $window.event;
 
@@ -168,8 +177,10 @@ angular.module('jkuri.slimscroll', [])
 				
 				if (scope.enabled === false) {
 					bar.remove();
+					scope.detachWheel(el);
 				} else {
 					element.append(bar);
+					scope.attachWheel(el);
 				}
 
 			});
