@@ -38,6 +38,7 @@ angular.module('jkuri.slimscroll', [])
 		scope.barDraggable = scope.$eval(attrs.barDraggable) || true;
 		scope.wheelStep = attrs.wheelStep || 20;
 		scope.opacity = attrs.opacity || 0.5;
+		scope.enabled = scope.$eval(attrs.enabled) || true;
 	};
 
 	return {
@@ -161,6 +162,21 @@ angular.module('jkuri.slimscroll', [])
 
 				el.scrollTop = delta;
 			};
+
+			scope.destroySlimscroll = function () {
+
+			};
+
+			attrs.$observe('enabled', function() {
+				scope.enabled = scope.$eval(attrs.enabled);
+				
+				if (scope.enabled === false) {
+					bar.remove();
+				} else {
+					element.append(bar);
+				}
+				
+			});
 
 			scope.getBarHeight();
 			scope.attachWheel(el);
