@@ -163,10 +163,6 @@ angular.module('jkuri.slimscroll', [])
 				el.scrollTop = delta;
 			};
 
-			scope.destroySlimscroll = function () {
-
-			};
-
 			attrs.$observe('enabled', function() {
 				scope.enabled = scope.$eval(attrs.enabled);
 				
@@ -175,7 +171,7 @@ angular.module('jkuri.slimscroll', [])
 				} else {
 					element.append(bar);
 				}
-				
+
 			});
 
 			scope.getBarHeight();
