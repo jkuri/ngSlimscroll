@@ -13,7 +13,7 @@ Install
 
 #### With bower:
 
-    $ bower install ngBookingCalendar
+    $ bower install ngSlimscroll
     
 #### Example Configuration
 ```html
