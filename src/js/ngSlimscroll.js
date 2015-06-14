@@ -174,13 +174,13 @@ angular.module('jkuri.slimscroll', [])
 			};
 
 			// mobile
-			element.bind('touchstart', function (e, b) {
+			bar.bind('touchstart', function (e, b) {
 				if (e.originalEvent.touches.length) {
 					touchDiff = e.originalEvent.touches[0].pageY;
 				}
 			});
 
-			element.bind('touchmove', function(e) {
+			bar.bind('touchmove', function(e) {
 				if (!releaseScroll) {
 					e.originalEvent.preventDefault();
 				}
