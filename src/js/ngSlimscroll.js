@@ -52,7 +52,8 @@ angular.module('jkuri.slimscroll', [])
 			var minBarHeight = 30,
 				isOverPanel,
 				releaseScroll = false,
-				isDrag = false;
+				isDrag = false,
+				touchDiff;
 
 			element.css({
 				'overflow': 'hidden',
@@ -171,6 +172,25 @@ angular.module('jkuri.slimscroll', [])
 
 				el.scrollTop = delta;
 			};
+
+			// mobile
+			element.bind('touchstart', function (e, b) {
+				if (e.originalEvent.touches.length) {
+					touchDiff = e.originalEvent.touches[0].pageY;
+				}
+			});
+
+			element.bind('touchmove', function(e) {
+				if (!releaseScroll) {
+					e.originalEvent.preventDefault();
+				}
+
+				if (e.originalEvent.touches.length) {
+					var diff = (touchDiff - e.originalEvent.touches[0].pageY) / o.touchScrollStep;
+					scrollContent(diff, true);
+					touchDiff = e.originalEvent.touches[0].pageY;
+				}
+			});
 
 			attrs.$observe('enabled', function() {
 				scope.enabled = scope.$eval(attrs.enabled);
