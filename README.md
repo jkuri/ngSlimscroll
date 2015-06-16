@@ -17,7 +17,11 @@ Install
 
     $ bower install ngSlimscroll
     
-#### Example Configuration
+#### With npm
+    
+    $ npm install ng-slimscroll
+    
+#### Example Configuration (bower)
 ```html
 <!DOCTYPE html>
 <html ng-app="app">
