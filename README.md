@@ -5,6 +5,8 @@ AngularJS implementation of original jQuery slimScroll
 
 Originally developed by Piotr Rochala ([http://rocha.la](http://rocha.la)) [jQuery version](https://github.com/rochal/jQuery-slimScroll)
 
+This version also supports horizontal scrolling, please see the [example](http://demo.jankuri.com/ngSlimscroll/) for more information about configuring the horizontal scroll.
+
 # Example
 Check out [the live demo](http://demo.jankuri.com/ngSlimscroll/)
 
