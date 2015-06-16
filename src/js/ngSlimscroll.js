@@ -39,6 +39,8 @@ angular.module('jkuri.slimscroll', [])
 		scope.wheelStep = attrs.wheelStep || 20;
 		scope.opacity = attrs.opacity || 0.5;
 		scope.enabled = scope.$eval(attrs.enabled) || true;
+		scope.horizontalScroll = scope.$eval(attrs.horizontalScroll) || false;
+		scope.horizontalScrollPosition = attrs.horizontalScrollPosition || 'bottom';
 	};
 
 	return {
@@ -53,7 +55,8 @@ angular.module('jkuri.slimscroll', [])
 				isOverPanel,
 				releaseScroll = false,
 				isDrag = false,
-				touchDiff;
+				touchDiff,
+				minBarWidth = 30;
 
 			element.css({
 				'overflow': 'hidden',
@@ -69,21 +72,39 @@ angular.module('jkuri.slimscroll', [])
 				'height': scope.height + 'px'
 			});
 
-			var bar = angular.element('<div ng-mousedown="makeBarDraggable($event)""></div>');
-			bar.css({
-				'background': scope.color,
-				'width': scope.size,
-				'position': 'absolute',
-				'top': '0',
-				'opacity': scope.opacity,
-				'display': scope.alwaysVisible ? 'block' : 'none',
-				'border-radius': scope.borderRadius,
-				'z-index': '99',
-				'cursor': 'pointer'
-			});
+			if (!scope.horizontalScroll) {
+				var bar = angular.element('<div ng-mousedown="makeBarDraggable($event)""></div>');
+				bar.css({
+					'background': scope.color,
+					'width': scope.size,
+					'position': 'absolute',
+					'top': '0',
+					'opacity': scope.opacity,
+					'display': scope.alwaysVisible ? 'block' : 'none',
+					'border-radius': scope.borderRadius,
+					'z-index': '99',
+					'cursor': 'pointer'
+				});
 
-			var positionCss = (scope.position === 'right') ? { right: scope.distance } : { left: scope.distance };
-			bar.css(positionCss);
+				var positionCss = (scope.position === 'right') ? { right: scope.distance } : { left: scope.distance };
+				bar.css(positionCss);
+			} else { // horizontal bar
+				var bar = angular.element('<div ng-mousedown="makeBarDraggableHorizontal($event)"></div>');
+				bar.css({
+					'background': scope.color,
+					'height': scope.size,
+					'position': 'absolute',
+					'left': '0',
+					'opacity': scope.opacity,
+					'display': scope.alwaysVisible ? 'block' : 'none',
+					'border-radius': scope.borderRadius,
+					'z-index': '99',
+					'cursor': 'pointer'
+				});
+
+				var positionCss = (scope.horizontalScrollPosition === 'bottom') ? { bottom: scope.distance } : { top: scope.distance };
+				bar.css(positionCss);
+			}
 
 			element.wrap(wrapper);
 			element.append(bar);
@@ -113,11 +134,42 @@ angular.module('jkuri.slimscroll', [])
 				});
 			};
 
+			scope.makeBarDraggableHorizontal = function () {
+				bar.bind('mousedown', function(e) {
+					var left = parseFloat(bar.css('left')),
+						pageX = e.pageX,
+						isDrag = true;
+
+					$document.bind('mousemove', function(e) {
+						bar.css({'left': left + e.pageX - pageX + 'px'});
+						scope.scrollContentHorizontal(0, bar[0].offsetLeft, false);
+					});
+
+					$document.bind('mouseup', function(e) {
+						isDrag = false;
+						$document.unbind('mousemove');
+					});
+
+					return;
+				}).bind('selectstart', function(e) {
+					e.preventDefault();
+					e.stopPropagation();
+					return false;
+				});
+			};
+
 			scope.getBarHeight = function () {
 				var barHeight = Math.max((el.offsetHeight / el.scrollHeight) * el.offsetHeight, minBarHeight);
-          			bar.css({ 'height': barHeight + 'px' });
-          			var display = barHeight === el.offsetHeight ? 'none' : 'block';
-          			bar.css({ display: display });
+      			bar.css({ 'height': barHeight + 'px' });
+      			var display = barHeight === el.offsetHeight ? 'none' : 'block';
+      			bar.css({ display: display });
+			};
+
+			scope.getBarWidth = function () {
+				var barWidth = Math.max((el.offsetWidth / el.scrollWidth) * el.offsetWidth, minBarWidth);
+				bar.css({ 'width': barWidth + 'px' });
+				var display = barWidth === el.offsetWidth ? 'none' : 'block';
+				bar.css({ display: display });
 			};
 
 			scope.attachWheel = function (target) {
@@ -147,7 +199,12 @@ angular.module('jkuri.slimscroll', [])
 				if (e.detail) { delta = e.detail / 3; }
 
 				var target = e.target || e.srcTarget || e.srcElement;
-				scope.scrollContent(delta, true);
+
+				if (!scope.horizontalScroll) {
+					scope.scrollContent(delta, true);
+				} else {
+					scope.scrollContentHorizontal(delta, true);
+				}
 
 				if (e.preventDefault && !releaseScroll) { e.preventDefault(); }
 				if (!releaseScroll) { e.returnValue = false; }
@@ -168,9 +225,29 @@ angular.module('jkuri.slimscroll', [])
 				}
 
 				percentScroll = parseInt(bar.css('top'), 10) / (el.offsetHeight - bar[0].offsetHeight);
-          			delta = percentScroll * (el.scrollHeight - el.offsetHeight);
+          		delta = percentScroll * (el.scrollHeight - el.offsetHeight);
 
 				el.scrollTop = delta;
+			};
+
+			scope.scrollContentHorizontal = function (x, isWheel, isJump) {
+				releaseScroll = false;
+				var delta = x,
+					maxLeft = el.offsetWidth - bar[0].offsetWidth,
+					percentScroll,
+					barLeft;
+
+				if (isWheel) {
+					delta = parseInt(bar.css('left'), 10) + x * parseInt(scope.wheelStep, 10) / 100 * bar[0].offsetWidth;
+					delta = Math.min(Math.max(delta, 0), maxLeft);
+					delta = (x > 0) ? Math.ceil(delta) : Math.floor(delta);
+					bar.css({ left: delta + 'px' });
+				}
+
+				percentScroll = parseInt(bar.css('left'), 10) / (el.offsetWidth - bar[0].offsetWidth);
+				delta = percentScroll * (el.scrollWidth - el.offsetWidth);
+
+				el.scrollLeft = delta;
 			};
 
 			// mobile
@@ -205,9 +282,15 @@ angular.module('jkuri.slimscroll', [])
 
 			});
 
-			scope.getBarHeight();
+			if (!scope.horizontalScroll) {
+				scope.getBarHeight();
+				scope.makeBarDraggable();
+			} else {
+				scope.getBarWidth();
+				scope.makeBarDraggableHorizontal();
+			}
+
 			scope.attachWheel(el);
-			scope.makeBarDraggable();
 
 		}
 	};
