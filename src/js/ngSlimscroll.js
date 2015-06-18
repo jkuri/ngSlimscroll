@@ -41,6 +41,7 @@ angular.module('jkuri.slimscroll', [])
 		scope.enabled = scope.$eval(attrs.enabled) || true;
 		scope.horizontalScroll = scope.$eval(attrs.horizontalScroll) || false;
 		scope.horizontalScrollPosition = attrs.horizontalScrollPosition || 'bottom';
+		scope.touchScrollStep = attrs.touchScrollStep || 200;
 	};
 
 	return {
@@ -251,21 +252,25 @@ angular.module('jkuri.slimscroll', [])
 			};
 
 			// mobile
-			bar.bind('touchstart', function (e, b) {
-				if (e.originalEvent.touches.length) {
-					touchDiff = e.originalEvent.touches[0].pageY;
+			element.bind('touchstart', function (e, b) {
+				if (e.touches.length) {
+					touchDiff = e.touches[0].pageY;
 				}
 			});
 
-			bar.bind('touchmove', function(e) {
+			element.bind('touchmove', function(e) {
 				if (!releaseScroll) {
-					e.originalEvent.preventDefault();
+					e.preventDefault();
 				}
 
-				if (e.originalEvent.touches.length) {
-					var diff = (touchDiff - e.originalEvent.touches[0].pageY) / o.touchScrollStep;
-					scrollContent(diff, true);
-					touchDiff = e.originalEvent.touches[0].pageY;
+				if (e.touches.length) {
+					var diff = (touchDiff - e.touches[0].pageY) / scope.touchScrollStep;
+					if (!scope.horizontalScroll) {
+						scope.scrollContent(diff, true);
+					} else {
+						scope.scrollContentHorizontal(diff, true);
+					}
+					touchDiff = e.touches[0].pageY;
 				}
 			});
 
