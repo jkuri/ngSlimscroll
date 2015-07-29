@@ -42,6 +42,8 @@ angular.module('jkuri.slimscroll', [])
 		scope.horizontalScroll = scope.$eval(attrs.horizontalScroll) || false;
 		scope.horizontalScrollPosition = attrs.horizontalScrollPosition || 'bottom';
 		scope.touchScrollStep = attrs.touchScrollStep || 200;
+		scope.watchContent = scope.$eval(attrs.watchContent) || false;
+
 	};
 
 	return {
@@ -284,19 +286,29 @@ angular.module('jkuri.slimscroll', [])
 					element.append(bar);
 					scope.attachWheel(el);
 				}
-
 			});
 
-			if (!scope.horizontalScroll) {
-				scope.getBarHeight();
-				scope.makeBarDraggable();
-			} else {
-				scope.getBarWidth();
-				scope.makeBarDraggableHorizontal();
+			if (scope.watchContent) {
+				var contentWatcher = scope.$watch(
+					function() { return element.html(); },
+					function() { scope.init(); }
+				)
+				scope.$on("$destroy", function () { contentWatcher(); });
 			}
 
-			scope.attachWheel(el);
-
+			scope.init = function () {
+				bar.css('top','0');
+				if (!scope.horizontalScroll) {
+					scope.getBarHeight();
+					scope.makeBarDraggable();
+				} else {
+					scope.getBarWidth();
+					scope.makeBarDraggableHorizontal();
+				}
+				scope.attachWheel(el);
+				return true;
+			}
+			scope.init();
 		}
 	};
 
