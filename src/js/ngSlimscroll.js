@@ -1,9 +1,9 @@
 /*
- * AngularJS Slimscroll directive 
+ * AngularJS Slimscroll directive
  * Originally developed by Piotr Rochala (http://rocha.la) (jQuery version)
- * 
+ *
  * This is a rewritten version of original jQuery slimsSroll (http://rocha.la/jQuery-slimScroll)
- * 
+ *
  * This version required AngularJS but does NOT require jQuery
  *
  * Author: Jan Kuri (jkuri88@gmail.com)
@@ -17,7 +17,7 @@ angular.module('jkuri.slimscroll', [])
 
 	var setScopeValues = function (scope, element, attrs) {
 		var height = undefined;
-		
+
 		if (attrs.height !== 0 && attrs.height !== undefined) {
 			height = attrs.height;
 		} else if (element[0].clientHeight !== 0) {
@@ -34,11 +34,11 @@ angular.module('jkuri.slimscroll', [])
 		scope.distance = attrs.distance || '1px';
 		scope.borderRadius = attrs.borderRadius || '3px';
 		scope.start = attrs.start || 'top';
-		scope.alwaysVisible = scope.$eval(attrs.alwaysVisible) || true;
-		scope.barDraggable = scope.$eval(attrs.barDraggable) || true;
+		scope.alwaysVisible = scope.$eval(attrs.alwaysVisible) === false ? false : true;
+		scope.barDraggable = scope.$eval(attrs.barDraggable) === false ? false : true;
 		scope.wheelStep = attrs.wheelStep || 20;
 		scope.opacity = attrs.opacity || 0.5;
-		scope.enabled = scope.$eval(attrs.enabled) || true;
+		scope.enabled = scope.$eval(attrs.enabled) === false ? false : true;
 		scope.horizontalScroll = scope.$eval(attrs.horizontalScroll) || false;
 		scope.horizontalScrollPosition = attrs.horizontalScrollPosition || 'bottom';
 		scope.touchScrollStep = attrs.touchScrollStep || 200;
@@ -63,16 +63,16 @@ angular.module('jkuri.slimscroll', [])
 
 			element.css({
 				'overflow': 'hidden',
-				'width': scope.width + 'px',
-				'height': scope.height + 'px',
+				'width': scope.width,
+				'height': scope.height
 			});
 
 			var wrapper = angular.element('<div></div>');
 			wrapper.css({
 				'position': 'relative',
 				'overflow': 'hidden',
-				'width': scope.width + 'px',
-				'height': scope.height + 'px'
+				'width': scope.width,
+				'height': scope.height
 			});
 
 			if (!scope.horizontalScroll) {
@@ -278,7 +278,7 @@ angular.module('jkuri.slimscroll', [])
 
 			attrs.$observe('enabled', function() {
 				scope.enabled = scope.$eval(attrs.enabled);
-				
+
 				if (scope.enabled === false) {
 					bar.remove();
 					scope.detachWheel(el);
