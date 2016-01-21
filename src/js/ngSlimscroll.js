@@ -312,8 +312,6 @@
             return bar;
         }
 
-
-
         function setScopeValues(scope, element, attrs) {
             var height = undefined;
 
