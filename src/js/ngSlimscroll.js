@@ -273,6 +273,7 @@
                 scope.attachWheel(el);
                 return true;
             }
+            
             init();
         }
 
@@ -288,6 +289,7 @@
                     'z-index': '99',
                     'cursor': 'pointer'
                 };
+ 
             if (scope.horizontalScroll) {
                 bar = angular.element('<div ng-mousedown="makeBarDraggableHorizontal($event)"></div>');
                 commonCssProperty = angular.extend(commonCssProperty, {
@@ -307,6 +309,7 @@
                     ? {right: scope.distance}
                     : {left: scope.distance};
             }
+
             commonCssProperty = angular.extend(commonCssProperty, positionCss);
             bar.css(commonCssProperty);
             return bar;
