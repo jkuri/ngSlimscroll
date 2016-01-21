@@ -10,306 +10,339 @@
  * Licence: GPL (http://www.opensource.org/licenses/gpl-license.php)
  * Version 0.6.0
  */
-angular.module('jkuri.slimscroll', [])
+/*
+ * AngularJS Slimscroll directive
+ * Originally developed by Piotr Rochala (http://rocha.la) (jQuery version)
+ *
+ * This is a rewritten version of original jQuery slimsSroll (http://rocha.la/jQuery-slimScroll)
+ *
+ * This version required AngularJS but does NOT require jQuery
+ *
+ * Author: Jan Kuri (jkuri88@gmail.com)
+ * Licence: GPL (http://www.opensource.org/licenses/gpl-license.php)
+ * Version 0.6.0
+ */
+(function () {
+    'use strict';
+    angular.module('jkuri.slimscroll', [])
+        .directive('ngSlimscroll', slimScroll);
 
-.directive('ngSlimscroll', ['$document', '$window', '$compile', function($document, $window, $compile) {
-	'use strict';
+    slimScroll.$inject = ['$document', '$window', '$compile'];
 
-	var setScopeValues = function (scope, element, attrs) {
-		var height = undefined;
+    function slimScroll($document, $window, $compile) {
+        return {
+            restrict: 'A',
+            scope: true,
+            link: linkFn
+        };
 
-		if (attrs.height !== 0 && attrs.height !== undefined) {
-			height = attrs.height;
-		} else if (element[0].clientHeight !== 0) {
-			height = element[0].clientHeight;
-		} else {
-			height = 250;
-		}
+        function linkFn(scope, element, attrs) {
+            setScopeValues(scope, element, attrs);
 
-		scope.width = attrs.width || element[0].clientWidth || 'auto';
-		scope.height = height;
-		scope.size = attrs.size || '7px';
-		scope.color = attrs.color || '#000';
-		scope.position = attrs.position || 'right';
-		scope.distance = attrs.distance || '1px';
-		scope.borderRadius = attrs.borderRadius || '3px';
-		scope.start = attrs.start || 'top';
-		scope.alwaysVisible = scope.$eval(attrs.alwaysVisible) === false ? false : true;
-		scope.barDraggable = scope.$eval(attrs.barDraggable) === false ? false : true;
-		scope.wheelStep = attrs.wheelStep || 20;
-		scope.opacity = attrs.opacity || 0.5;
-		scope.enabled = scope.$eval(attrs.enabled) === false ? false : true;
-		scope.horizontalScroll = scope.$eval(attrs.horizontalScroll) || false;
-		scope.horizontalScrollPosition = attrs.horizontalScrollPosition || 'bottom';
-		scope.touchScrollStep = attrs.touchScrollStep || 200;
-		scope.watchContent = scope.$eval(attrs.watchContent) || false;
+            var el = element[0];
 
-	};
+            var minBarHeight = 30,
+                releaseScroll = false,
+                touchDiff,
+                minBarWidth = 30;
 
-	return {
-		restrict: 'A',
-		scope: true,
-		link: function(scope, element, attrs) {
-			setScopeValues(scope, element, attrs);
+            element.css({
+                'overflow': 'hidden',
+                'width': scope.width,
+                'height': scope.height
+            });
 
-			var el = element[0];
+            var wrapper = angular.element('<div></div>');
+            wrapper.css({
+                'position': 'relative',
+                'overflow': 'hidden',
+                'width': scope.width,
+                'height': scope.height
+            });
 
-			var minBarHeight = 30,
-				isOverPanel,
-				releaseScroll = false,
-				isDrag = false,
-				touchDiff,
-				minBarWidth = 30;
+            var bar = getBaseBar(scope);
 
-			element.css({
-				'overflow': 'hidden',
-				'width': scope.width,
-				'height': scope.height
-			});
+            element.wrap(wrapper);
+            element.append(bar);
+            $compile(bar)(scope);
 
-			var wrapper = angular.element('<div></div>');
-			wrapper.css({
-				'position': 'relative',
-				'overflow': 'hidden',
-				'width': scope.width,
-				'height': scope.height
-			});
+            scope.makeBarDraggable = function () {
+                bar.bind('mousedown', function (e) {
+                    var top = parseFloat(bar.css('top')),
+                        pageY = e.pageY,
+                        isDrag = true;
 
-			if (!scope.horizontalScroll) {
-				var bar = angular.element('<div ng-mousedown="makeBarDraggable($event)""></div>');
-				bar.css({
-					'background': scope.color,
-					'width': scope.size,
-					'position': 'absolute',
-					'top': '0',
-					'opacity': scope.opacity,
-					'display': scope.alwaysVisible ? 'block' : 'none',
-					'border-radius': scope.borderRadius,
-					'z-index': '99',
-					'cursor': 'pointer'
-				});
+                    $document.bind('mousemove', function (e) {
+                        bar.css({'top': top + e.pageY - pageY + 'px'});
+                        scope.scrollContent(0, bar[0].offsetTop, false);
+                    });
 
-				var positionCss = (scope.position === 'right') ? { right: scope.distance } : { left: scope.distance };
-				bar.css(positionCss);
-			} else { // horizontal bar
-				var bar = angular.element('<div ng-mousedown="makeBarDraggableHorizontal($event)"></div>');
-				bar.css({
-					'background': scope.color,
-					'height': scope.size,
-					'position': 'absolute',
-					'left': '0',
-					'opacity': scope.opacity,
-					'display': scope.alwaysVisible ? 'block' : 'none',
-					'border-radius': scope.borderRadius,
-					'z-index': '99',
-					'cursor': 'pointer'
-				});
+                    $document.bind('mouseup', function (e) {
+                        isDrag = false;
+                        $document.unbind('mousemove');
+                    });
+                }).bind('selectstart', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                });
+            };
 
-				var positionCss = (scope.horizontalScrollPosition === 'bottom') ? { bottom: scope.distance } : { top: scope.distance };
-				bar.css(positionCss);
-			}
+            scope.makeBarDraggableHorizontal = function () {
+                bar.bind('mousedown', function (e) {
+                    var left = parseFloat(bar.css('left')),
+                        pageX = e.pageX,
+                        isDrag = true;
 
-			element.wrap(wrapper);
-			element.append(bar);
-			$compile(bar)(scope);
+                    $document.bind('mousemove', function (e) {
+                        bar.css({'left': left + e.pageX - pageX + 'px'});
+                        scope.scrollContentHorizontal(0, bar[0].offsetLeft, false);
+                    });
 
-			scope.makeBarDraggable = function () {
-				bar.bind('mousedown', function(e) {
-					var top = parseFloat(bar.css('top')),
-					    pageY = e.pageY,
-					    isDrag = true;
+                    $document.bind('mouseup', function (e) {
+                        isDrag = false;
+                        $document.unbind('mousemove');
+                    });
+                }).bind('selectstart', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                });
+            };
 
-					$document.bind('mousemove', function(e) {
-						bar.css({'top': top + e.pageY - pageY + 'px'});
-						scope.scrollContent(0, bar[0].offsetTop, false);
-					});
+            scope.getBarHeight = function () {
+                var barHeight = Math.max((el.offsetHeight / el.scrollHeight) * el.offsetHeight, minBarHeight);
+                var display = barHeight === el.offsetHeight ? 'none' : 'block';
+                bar.css({
+                    height: barHeight + 'px',
+                    display: display
+                });
+            };
 
-					$document.bind('mouseup', function(e) {
-						isDrag = false;
-						$document.unbind('mousemove');
-					});
+            scope.getBarWidth = function () {
+                var barWidth = Math.max((el.offsetWidth / el.scrollWidth) * el.offsetWidth, minBarWidth);
+                var display = barWidth === el.offsetWidth ? 'none' : 'block';
+                bar.css({
+                    width: barWidth + 'px',
+                    display: display
+                });
+            };
 
-					return;
-				}).bind('selectstart', function(e) {
-					e.preventDefault();
-					e.stopPropagation();
-					return false;
-				});
-			};
+            scope.attachWheel = function (target) {
+                if ($window.addEventListener) {
+                    target.addEventListener('DOMMouseScroll', scope.onWheel, false);
+                    target.addEventListener('mousewheel', scope.onWheel, false);
+                } else {
+                    $document.addEventListener('onmousewheel', scope.onWheel);
+                }
+            };
 
-			scope.makeBarDraggableHorizontal = function () {
-				bar.bind('mousedown', function(e) {
-					var left = parseFloat(bar.css('left')),
-						pageX = e.pageX,
-						isDrag = true;
+            scope.detachWheel = function (target) {
+                if ($window.removeEventListener) {
+                    target.removeEventListener('DOMMouseScroll', scope.onWheel, false);
+                    target.removeEventListener('mousewheel', scope.onWheel, false);
+                } else {
+                    $document.removeEventListener('onmousewheel', scope.wheel);
+                }
+            };
 
-					$document.bind('mousemove', function(e) {
-						bar.css({'left': left + e.pageX - pageX + 'px'});
-						scope.scrollContentHorizontal(0, bar[0].offsetLeft, false);
-					});
+            scope.onWheel = function (e) {
+                e = e || $window.event;
 
-					$document.bind('mouseup', function(e) {
-						isDrag = false;
-						$document.unbind('mousemove');
-					});
+                var delta = 0;
 
-					return;
-				}).bind('selectstart', function(e) {
-					e.preventDefault();
-					e.stopPropagation();
-					return false;
-				});
-			};
+                if (e.wheelDelta) {
+                    delta = -e.wheelDelta / 120;
+                }
 
-			scope.getBarHeight = function () {
-				var barHeight = Math.max((el.offsetHeight / el.scrollHeight) * el.offsetHeight, minBarHeight);
-      			bar.css({ 'height': barHeight + 'px' });
-      			var display = barHeight === el.offsetHeight ? 'none' : 'block';
-      			bar.css({ display: display });
-			};
+                if (e.detail) {
+                    delta = e.detail / 3;
+                }
 
-			scope.getBarWidth = function () {
-				var barWidth = Math.max((el.offsetWidth / el.scrollWidth) * el.offsetWidth, minBarWidth);
-				bar.css({ 'width': barWidth + 'px' });
-				var display = barWidth === el.offsetWidth ? 'none' : 'block';
-				bar.css({ display: display });
-			};
+                if (!scope.horizontalScroll) {
+                    scope.scrollContent(delta, true);
+                } else {
+                    scope.scrollContentHorizontal(delta, true);
+                }
 
-			scope.attachWheel = function (target) {
-				if ($window.addEventListener) {
-					target.addEventListener('DOMMouseScroll', scope.onWheel, false);
-					target.addEventListener('mousewheel', scope.onWheel, false);
-				} else {
-					$document.addEventListener('onmousewheel', scope.onWheel);
-				}
-			};
+                if (e.preventDefault && !releaseScroll) {
+                    e.preventDefault();
+                }
 
-			scope.detachWheel = function (target) {
-				if ($window.removeEventListener) {
-					target.removeEventListener('DOMMouseScroll', scope.onWheel, false);
-					target.removeEventListener('mousewheel', scope.onWheel, false);
-				} else {
-					$document.removeEventListener('onmousewheel', scope.wheel);
-				}
-			};
+                if (!releaseScroll) {
+                    e.returnValue = false;
+                }
+            };
 
-			scope.onWheel = function (e) {
-				var e = e || $window.event;
+            scope.scrollContent = function (y, isWheel) {
+                releaseScroll = false;
+                var delta = y,
+                    maxTop = el.offsetHeight - bar[0].offsetHeight,
+                    percentScroll;
 
-				var delta = 0;
+                if (isWheel) {
+                    delta = parseInt(bar.css('top'), 10) + y * parseInt(scope.wheelStep, 10) / 100 * bar[0].offsetHeight;
+                    delta = Math.min(Math.max(delta, 0), maxTop);
+                    delta = (y > 0) ? Math.ceil(delta) : Math.floor(delta);
+                    bar.css({top: delta + 'px'});
+                }
 
-				if (e.wheelDelta) { delta = -e.wheelDelta / 120; }
-				if (e.detail) { delta = e.detail / 3; }
+                percentScroll = parseInt(bar.css('top'), 10) / (el.offsetHeight - bar[0].offsetHeight);
+                delta = percentScroll * (el.scrollHeight - el.offsetHeight);
 
-				var target = e.target || e.srcTarget || e.srcElement;
+                el.scrollTop = delta;
+            };
 
-				if (!scope.horizontalScroll) {
-					scope.scrollContent(delta, true);
-				} else {
-					scope.scrollContentHorizontal(delta, true);
-				}
+            scope.scrollContentHorizontal = function (x, isWheel) {
+                releaseScroll = false;
+                var delta = x,
+                    maxLeft = el.offsetWidth - bar[0].offsetWidth,
+                    percentScroll;
 
-				if (e.preventDefault && !releaseScroll) { e.preventDefault(); }
-				if (!releaseScroll) { e.returnValue = false; }
-			};
+                if (isWheel) {
+                    delta = parseInt(bar.css('left'), 10) + x * parseInt(scope.wheelStep, 10) / 100 * bar[0].offsetWidth;
+                    delta = Math.min(Math.max(delta, 0), maxLeft);
+                    delta = (x > 0) ? Math.ceil(delta) : Math.floor(delta);
+                    bar.css({left: delta + 'px'});
+                }
 
-			scope.scrollContent = function (y, isWheel, isJump) {
-				releaseScroll = false;
-				var delta = y,
-					maxTop = el.offsetHeight - bar[0].offsetHeight,
-					percentScroll,
-					barTop;
+                percentScroll = parseInt(bar.css('left'), 10) / (el.offsetWidth - bar[0].offsetWidth);
+                delta = percentScroll * (el.scrollWidth - el.offsetWidth);
 
-				if (isWheel) {
-					delta = parseInt(bar.css('top'), 10) + y * parseInt(scope.wheelStep, 10) / 100 * bar[0].offsetHeight;
-					delta = Math.min(Math.max(delta, 0), maxTop);
-					delta = (y > 0) ? Math.ceil(delta) : Math.floor(delta);
-					bar.css({ top: delta + 'px' });
-				}
+                el.scrollLeft = delta;
+            };
 
-				percentScroll = parseInt(bar.css('top'), 10) / (el.offsetHeight - bar[0].offsetHeight);
-          		delta = percentScroll * (el.scrollHeight - el.offsetHeight);
+            // mobile
+            element.bind('touchstart', function (e, b) {
+                if (e.touches.length) {
+                    touchDiff = e.touches[0].pageY;
+                }
+            });
 
-				el.scrollTop = delta;
-			};
+            element.bind('touchmove', function (e) {
+                if (!releaseScroll) {
+                    e.preventDefault();
+                }
 
-			scope.scrollContentHorizontal = function (x, isWheel, isJump) {
-				releaseScroll = false;
-				var delta = x,
-					maxLeft = el.offsetWidth - bar[0].offsetWidth,
-					percentScroll,
-					barLeft;
+                if (e.touches.length) {
+                    var diff = (touchDiff - e.touches[0].pageY) / scope.touchScrollStep;
+                    if (!scope.horizontalScroll) {
+                        scope.scrollContent(diff, true);
+                    } else {
+                        scope.scrollContentHorizontal(diff, true);
+                    }
+                    touchDiff = e.touches[0].pageY;
+                }
+            });
 
-				if (isWheel) {
-					delta = parseInt(bar.css('left'), 10) + x * parseInt(scope.wheelStep, 10) / 100 * bar[0].offsetWidth;
-					delta = Math.min(Math.max(delta, 0), maxLeft);
-					delta = (x > 0) ? Math.ceil(delta) : Math.floor(delta);
-					bar.css({ left: delta + 'px' });
-				}
+            attrs.$observe('enabled', function () {
+                scope.enabled = scope.$eval(attrs.enabled);
 
-				percentScroll = parseInt(bar.css('left'), 10) / (el.offsetWidth - bar[0].offsetWidth);
-				delta = percentScroll * (el.scrollWidth - el.offsetWidth);
+                if (scope.enabled === false) {
+                    bar.remove();
+                    scope.detachWheel(el);
+                } else {
+                    element.append(bar);
+                    scope.attachWheel(el);
+                }
+            });
 
-				el.scrollLeft = delta;
-			};
+            if (scope.watchContent) {
+                var contentWatcher = scope.$watch(
+                    function () {
+                        return element.html();
+                    },
+                    function () {
+                        init();
+                    }
+                );
+                scope.$on("$destroy", function () {
+                    contentWatcher();
+                });
+            }
 
-			// mobile
-			element.bind('touchstart', function (e, b) {
-				if (e.touches.length) {
-					touchDiff = e.touches[0].pageY;
-				}
-			});
+            function init() {
+                bar.css('top', '0');
+                if (!scope.horizontalScroll) {
+                    scope.getBarHeight();
+                    scope.makeBarDraggable();
+                } else {
+                    scope.getBarWidth();
+                    scope.makeBarDraggableHorizontal();
+                }
+                scope.attachWheel(el);
+                return true;
+            }
+            
+            init();
+        }
 
-			element.bind('touchmove', function(e) {
-				if (!releaseScroll) {
-					e.preventDefault();
-				}
+        function getBaseBar(scope) {
+            var bar,
+                positionCss,
+                commonCssProperty = {
+                    'background': scope.color,
+                    'position': 'absolute',
+                    'opacity': scope.opacity,
+                    'display': scope.alwaysVisible ? 'block' : 'none',
+                    'border-radius': scope.borderRadius,
+                    'z-index': '99',
+                    'cursor': 'pointer'
+                };
+ 
+            if (scope.horizontalScroll) {
+                bar = angular.element('<div ng-mousedown="makeBarDraggableHorizontal($event)"></div>');
+                commonCssProperty = angular.extend(commonCssProperty, {
+                    'height': scope.size,
+                    'left': '0'
+                });
+                positionCss = (scope.horizontalScrollPosition === 'bottom')
+                    ? {bottom: scope.distance}
+                    : {top: scope.distance};
+            } else {
+                bar = angular.element('<div ng-mousedown="makeBarDraggable($event)""></div>');
+                commonCssProperty = angular.extend(commonCssProperty, {
+                    'width': scope.size,
+                    'top': '0'
+                });
+                positionCss = (scope.position === 'right')
+                    ? {right: scope.distance}
+                    : {left: scope.distance};
+            }
 
-				if (e.touches.length) {
-					var diff = (touchDiff - e.touches[0].pageY) / scope.touchScrollStep;
-					if (!scope.horizontalScroll) {
-						scope.scrollContent(diff, true);
-					} else {
-						scope.scrollContentHorizontal(diff, true);
-					}
-					touchDiff = e.touches[0].pageY;
-				}
-			});
+            commonCssProperty = angular.extend(commonCssProperty, positionCss);
+            bar.css(commonCssProperty);
+            return bar;
+        }
 
-			attrs.$observe('enabled', function() {
-				scope.enabled = scope.$eval(attrs.enabled);
+        function setScopeValues(scope, element, attrs) {
+            var height = undefined;
 
-				if (scope.enabled === false) {
-					bar.remove();
-					scope.detachWheel(el);
-				} else {
-					element.append(bar);
-					scope.attachWheel(el);
-				}
-			});
+            if (attrs.height !== 0 && attrs.height !== undefined) {
+                height = attrs.height;
+            } else if (element[0].clientHeight !== 0) {
+                height = element[0].clientHeight;
+            } else {
+                height = 250;
+            }
 
-			if (scope.watchContent) {
-				var contentWatcher = scope.$watch(
-					function() { return element.html(); },
-					function() { scope.init(); }
-				)
-				scope.$on("$destroy", function () { contentWatcher(); });
-			}
-
-			scope.init = function () {
-				bar.css('top','0');
-				if (!scope.horizontalScroll) {
-					scope.getBarHeight();
-					scope.makeBarDraggable();
-				} else {
-					scope.getBarWidth();
-					scope.makeBarDraggableHorizontal();
-				}
-				scope.attachWheel(el);
-				return true;
-			}
-			scope.init();
-		}
-	};
-
-}]);
+            scope.width = attrs['width'] || element[0].clientWidth || 'auto';
+            scope.height = height;
+            scope.size = attrs['size'] || '7px';
+            scope.color = attrs['color'] || '#000';
+            scope.position = attrs['position'] || 'right';
+            scope.distance = attrs['distance'] || '1px';
+            scope.borderRadius = attrs['borderRadius'] || '3px';
+            scope.start = attrs['start'] || 'top';
+            scope.alwaysVisible = scope.$eval(attrs['alwaysVisible']) !== false;
+            scope.barDraggable = scope.$eval(attrs['barDraggable']) !== false;
+            scope.wheelStep = attrs['wheelStep'] || 20;
+            scope.opacity = attrs['opacity'] || 0.5;
+            scope.enabled = scope.$eval(attrs['enabled']) !== false;
+            scope.horizontalScroll = scope.$eval(attrs['horizontalScroll']) || false;
+            scope.horizontalScrollPosition = attrs['horizontalScrollPosition'] || 'bottom';
+            scope.touchScrollStep = attrs['touchScrollStep'] || 200;
+            scope.watchContent = scope.$eval(attrs['watchContent']) || false;
+        }
+    }
+})();
