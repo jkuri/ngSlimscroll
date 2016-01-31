@@ -10,20 +10,9 @@
  * Licence: GPL (http://www.opensource.org/licenses/gpl-license.php)
  * Version 0.6.0
  */
-/*
- * AngularJS Slimscroll directive
- * Originally developed by Piotr Rochala (http://rocha.la) (jQuery version)
- *
- * This is a rewritten version of original jQuery slimsSroll (http://rocha.la/jQuery-slimScroll)
- *
- * This version required AngularJS but does NOT require jQuery
- *
- * Author: Jan Kuri (jkuri88@gmail.com)
- * Licence: GPL (http://www.opensource.org/licenses/gpl-license.php)
- * Version 0.6.0
- */
 (function () {
     'use strict';
+
     angular.module('jkuri.slimscroll', [])
         .directive('ngSlimscroll', slimScroll);
 
@@ -65,6 +54,20 @@
             element.wrap(wrapper);
             element.append(bar);
             $compile(bar)(scope);
+
+            element.on('mouseenter', function () {
+                if (!scope.horizontalScroll) {
+                    scope.getBarHeight();
+                } else {
+                    scope.getBarWidth();
+                }
+            });
+
+            element.on('mouseleave', function() {
+                if(!scope.alwaysVisible) {
+                    bar.css({ display: 'none' });
+                }
+            });
 
             scope.makeBarDraggable = function () {
                 bar.bind('mousedown', function (e) {
@@ -262,13 +265,16 @@
             }
 
             function init() {
-                bar.css('top', '0');
+                bar.css('top');
                 if (!scope.horizontalScroll) {
                     scope.getBarHeight();
                     scope.makeBarDraggable();
                 } else {
                     scope.getBarWidth();
                     scope.makeBarDraggableHorizontal();
+                }
+                if(!scope.alwaysVisible) {
+                    bar.css({ display: 'none' });
                 }
                 scope.attachWheel(el);
                 return true;
