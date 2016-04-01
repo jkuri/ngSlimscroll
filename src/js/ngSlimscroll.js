@@ -292,7 +292,7 @@
                     'opacity': scope.opacity,
                     'display': scope.alwaysVisible ? 'block' : 'none',
                     'border-radius': scope.borderRadius,
-                    'z-index': '99',
+                    'z-index': scope.zIndex,
                     'cursor': 'pointer'
                 };
  
@@ -349,6 +349,7 @@
             scope.horizontalScrollPosition = attrs['horizontalScrollPosition'] || 'bottom';
             scope.touchScrollStep = attrs['touchScrollStep'] || 200;
             scope.watchContent = scope.$eval(attrs['watchContent']) || false;
+            scope.zIndex = attrs['zIndex'] || '99';
         }
     }
 })();
